@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kamadhenu Fee Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --teal: #0D6E6E; --teal-light: #1A9999; --teal-pale: #E6F5F5;
+    --gold: #C9972B; --gold-light: #E8C46A; --gold-pale: #FDF6E3;
+    --dark: #0A1A1A; --text: #1A3030; --text-muted: #4A6E6E;
+    --red: #E53E3E; --red-pale: #FFF5F5;
+    --orange: #DD6B20; --orange-pale: #FFFAF0;
+    --green: #38A169; --green-pale: #F0FFF4;
+    --blue: #3182CE; --blue-pale: #EBF8FF;
+    --cream: #F4FAFA;
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--dark), #122828);
+    padding: 1.2rem 1.5rem; position: relative; overflow: hidden;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .header::before {
+    content: 'ॐ'; position: absolute; right: 1rem; top: 50%;
+    transform: translateY(-50%); font-size: 4rem; font-family: serif;
+    color: rgba(201,151,43,0.1); pointer-events: none;
+  }
+  .header-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .header-logo { font-size: 1.8rem; }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: white; }
+  .header-sub { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+  /* MAIN */
+  .main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+  /* STATS BAR */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: white; border-radius: 14px; padding: 1rem 0.8rem;
+    border: 1px solid rgba(13,110,110,0.1); text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; line-height: 1; margin-bottom: 3px; }
+  .stat-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-card.s-due .stat-num { color: var(--red); }
+  .stat-card.s-soon .stat-num { color: var(--orange); }
+  .stat-card.s-ok .stat-num { color: var(--green); }
+  .stat-card.s-total .stat-num { color: var(--teal); }
+
+  /* SYNC NOTICE */
+  .sync-notice {
+    background: var(--blue-pale); border: 1px solid rgba(49,130,206,0.2);
+    border-radius: 12px; padding: 0.8rem 1rem; margin-bottom: 1.2rem;
+    font-size: 0.8rem; color: var(--blue); display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ADD STUDENT FORM */
+  .form-card {
+    background: white; border-radius: 18px; padding: 1.5rem;
+    border: 1px solid rgba(13,110,110,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05); margin-bottom: 1.5rem;
+  }
+  .form-title {
+    font-family: 'Playfair Display', serif; font-size: 1rem;
+    font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.full { grid-column: span 2; }
+  label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  input, select {
+    border: 1.5px solid rgba(13,110,110,0.15); border-radius: 10px;
+    padding: 0.65rem 0.8rem; font-size: 0.9rem; font-family: 'DM Sans', sans-serif;
+    color: var(--text); outline: none; transition: border-color 0.2s;
+    background: var(--cream); -webkit-appearance: none; width: 100%;
+  }
+  input:focus, select:focus { border-color: var(--teal); background: white; }
+  input::placeholder { color: #aaa; }
+  .btn-add {
+    background: linear-gradient(135deg, var(--teal), #1B4F8A);
+    color: white; border: none; border-radius: 10px;
+    padding: 0.7rem; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s; width: 100%; margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(13,110,110,0.3);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-add:active { transform: scale(0.98); }
+
+  /* FILTER BAR */
+  .filter-bar { display: flex; gap: 6px; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    background: white; border: 1.5px solid rgba(13,110,110,0.15);
+    border-radius: 50px; padding: 0.38rem 0.9rem; font-size: 0.78rem;
+    font-weight: 500; color: var(--text-muted); cursor: pointer;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .filter-btn.active { background: var(--teal); border-color: var(--teal); color: white; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Playfair Display', serif; font-size: 1rem;
+    font-weight: 700; color: var(--dark); margin-bottom: 0.8rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-count { font-size: 0.78rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+
+  /* STUDENT LIST */
+  .student-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .student-card {
+    background: white; border-radius: 16px; padding: 1rem 1.1rem;
+    border: 1.5px solid rgba(13,110,110,0.08);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    transition: all 0.2s; animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:translateY(0);} }
+  .student-card.c-overdue { border-color: rgba(229,62,62,0.4); background: var(--red-pale); }
+  .student-card.c-soon { border-color: rgba(221,107,32,0.4); background: var(--orange-pale); }
+  .student-card.c-paid { border-color: rgba(56,161,105,0.3); background: var(--green-pale); }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 0.7rem; }
+  .card-left { flex: 1; }
+  .student-name { font-weight: 600; font-size: 1rem; color: var(--dark); margin-bottom: 3px; }
+  .student-meta { font-size: 0.76rem; color: var(--text-muted); line-height: 1.5; }
+
+  .card-right { text-align: right; flex-shrink: 0; }
+  .fee-amount { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: var(--teal); }
+  .fee-due { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+  .fee-due.overdue { color: var(--red); font-weight: 600; }
+  .fee-due.soon { color: var(--orange); font-weight: 600; }
+
+  .status-pill {
+    display: inline-flex; align-items: center;
+    padding: 0.22rem 0.65rem; border-radius: 50px;
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .pill-overdue { background: var(--red); color: white; }
+  .pill-soon { background: var(--orange); color: white; }
+  .pill-ok { background: var(--green); color: white; }
+  .pill-paid { background: var(--blue); color: white; }
+
+  /* ACTION BUTTONS */
+  .card-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+  .btn-action {
+    border: none; border-radius: 9px; padding: 0.5rem 0.85rem;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 4px;
+    text-decoration: none; -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+  }
+  .btn-wa { background: #25D366; color: white; }
+  .btn-wa:active { background: #1ebe5d; }
+  .btn-call { background: var(--teal-pale); color: var(--teal); border: 1.5px solid rgba(13,110,110,0.2); }
+  .btn-call:active { background: rgba(13,110,110,0.15); }
+  .btn-paid { background: var(--blue-pale); color: var(--blue); border: 1.5px solid rgba(49,130,206,0.2); }
+  .btn-paid:active { background: rgba(49,130,206,0.15); }
+  .btn-paid.is-paid { background: var(--blue); color: white; border-color: var(--blue); }
+  .btn-unpaid { background: var(--orange-pale); color: var(--orange); border: 1.5px solid rgba(221,107,32,0.2); font-size: 0.72rem; }
+  .btn-delete { background: var(--red-pale); color: var(--red); border: 1.5px solid rgba(229,62,62,0.2); margin-left: auto; }
+  .btn-delete:active { background: rgba(229,62,62,0.15); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 3rem 1rem; color: var(--text-muted);
+    background: white; border-radius: 16px; border: 1.5px dashed rgba(13,110,110,0.2);
+  }
+  .empty-state .emoji { font-size: 2.5rem; margin-bottom: 0.7rem; }
+  .empty-state p { font-size: 0.88rem; }
+
+  /* FOOTER */
+  .footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: var(--text-muted); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--dark); color: white; padding: 0.7rem 1.4rem;
+    border-radius: 50px; font-size: 0.82rem; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 999;
+    transition: transform 0.3s ease; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-logo">🦚</div>
+    <div>
+      <div class="header-title">Kamadhenu Fee Tracker</div>
+      <div class="header-sub">Track fees · Send reminders · Mark payments</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="sync-notice">
+    ℹ️ <strong>Note:</strong> Student data is saved on this device. To use on multiple phones, use the same browser and bookmark this page. Export/import coming soon.
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-card s-total"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-card s-due"><div class="stat-num" id="statOverdue">0</div><div class="stat-label">Overdue</div></div>
+    <div class="stat-card s-soon"><div class="stat-num" id="statSoon">0</div><div class="stat-label">Due Soon</div></div>
+    <div class="stat-card s-ok"><div class="stat-num" id="statPaid">0</div><div class="stat-label">Paid</div></div>
+  </div>
+
+  <!-- ADD STUDENT FORM -->
+  <div class="form-card">
+    <div class="form-title">➕ Add New Student</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Student Name</label>
+        <input type="text" id="inp-name" placeholder="e.g. Ravi Kumar" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Parent WhatsApp No.</label>
+        <input type="tel" id="inp-phone" placeholder="e.g. 9876543210" maxlength="10">
+      </div>
+      <div class="form-group full">
+        <label>Class &amp; Board</label>
+        <select id="inp-class">
+          <option value="">Select class &amp; board</option>
+          <optgroup label="── State Board ──">
+            <option value="Class 5 – State|800">Class 5 – State (₹800/month)</option>
+            <option value="Class 6 – State|900">Class 6 – State (₹900/month)</option>
+            <option value="Class 7 – State|900">Class 7 – State (₹900/month)</option>
+            <option value="Class 8 – State|1000">Class 8 – State (₹1000/month)</option>
+            <option value="Class 9 – State|1200">Class 9 – State (₹1200/month)</option>
+            <option value="Class 10 – State|1500">Class 10 – State (₹1500/month)</option>
+          </optgroup>
+          <optgroup label="── CBSE ──">
+            <option value="Class 5 – CBSE|800">Class 5 – CBSE (₹800/month)</option>
+            <option value="Class 6 – CBSE|1000">Class 6 – CBSE (₹1000/month)</option>
+            <option value="Class 7 – CBSE|1000">Class 7 – CBSE (₹1000/month)</option>
+            <option value="Class 8 – CBSE|1200">Class 8 – CBSE (₹1200/month)</option>
+            <option value="Class 9 – CBSE|1500">Class 9 – CBSE (₹1500/month)</option>
+            <option value="Class 10 – CBSE|2000">Class 10 – CBSE (₹2000/month)</option>
+          </optgroup>
+          <optgroup label="── ICSE ──">
+            <option value="Class 5 – ICSE|900">Class 5 – ICSE (₹900/month)</option>
+            <option value="Class 6 – ICSE|1200">Class 6 – ICSE (₹1200/month)</option>
+            <option value="Class 7 – ICSE|1200">Class 7 – ICSE (₹1200/month)</option>
+            <option value="Class 8 – ICSE|1500">Class 8 – ICSE (₹1500/month)</option>
+            <option value="Class 9 – ICSE|1500">Class 9 – ICSE (₹1500/month)</option>
+            <option value="Class 10 – ICSE|2500">Class 10 – ICSE (₹2500/month)</option>
+          </optgroup>
+          <optgroup label="── PUC (All Boards) ──">
+            <option value="1st PUC Commerce|2500">1st PUC Commerce (₹2500/month)</option>
+            <option value="2nd PUC Commerce|2500">2nd PUC Commerce (₹2500/month)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Joining Date</label>
+        <input type="date" id="inp-date">
+      </div>
+      <div class="form-group">
+        <label>Parent Name (optional)</label>
+        <input type="text" id="inp-parent" placeholder="e.g. Mr. Ravi" autocomplete="off">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addStudent()">➕ Add Student</button>
+  </div>
+
+  <!-- FILTER -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('overdue',this)">🔴 Overdue</button>
+    <button class="filter-btn" onclick="setFilter('soon',this)">🟠 Due Soon (5 days)</button>
+    <button class="filter-btn" onclick="setFilter('paid',this)">✅ Paid This Month</button>
+    <button class="filter-btn" onclick="setFilter('ok',this)">🟢 On Track</button>
+  </div>
+
+  <div class="section-title">
+    <span>Students</span>
+    <span class="section-count" id="listCount"></span>
+  </div>
+  <div class="student-list" id="studentList"></div>
+
+</div>
+
+<div class="footer">Kamadhenu Tuition Centre · Weavers Colony, Bannerghatta Road, Bangalore 560083</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── DATA ──
+  let students = [];
+  const STORE_KEY = 'ktc_students_v2';
+
+  function load() {
+    try { students = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e) { students = []; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(students)); } catch(e) { showToast('⚠️ Storage full! Please delete some students.'); }
+  }
+
+  // ── INIT ──
+  load();
+  document.getElementById('inp-date').valueAsDate = new Date();
+  let currentFilter = 'all';
+
+  // ── HELPERS ──
+  function getTime(ts) {
+    return new Date(ts || Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  }
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  }
+
+  function getDueInfo(s) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const joined = new Date(s.joiningDate);
+    let due = new Date(today.getFullYear(), today.getMonth(), joined.getDate());
+    if (due < today) due.setMonth(due.getMonth() + 1);
+    const diffDays = Math.ceil((due - today) / 86400000);
+
+    // Check if paid this month
+    if (s.paidMonth) {
+      const pm = new Date(s.paidMonth);
+      if (pm.getMonth() === due.getMonth() && pm.getFullYear() === due.getFullYear()) {
+        return { due, diffDays, status: 'paid' };
+      }
+      // If paid last month but this month's due has passed
+      const lastDue = new Date(today.getFullYear(), today.getMonth(), joined.getDate());
+      if (lastDue <= today && (pm.getMonth() !== today.getMonth() || pm.getFullYear() !== today.getFullYear())) {
+        return { due, diffDays: 0, status: 'overdue' };
+      }
+    }
+
+    if (diffDays <= 0) return { due, diffDays, status: 'overdue' };
+    if (diffDays <= 5) return { due, diffDays, status: 'soon' };
+    return { due, diffDays, status: 'ok' };
+  }
+
+  // ── ADD STUDENT ──
+  function addStudent() {
+    const name = document.getElementById('inp-name').value.trim();
+    const phone = document.getElementById('inp-phone').value.trim();
+    const classVal = document.getElementById('inp-class').value;
+    const date = document.getElementById('inp-date').value;
+    const parent = document.getElementById('inp-parent').value.trim();
+
+    if (!name) { showToast('⚠️ Please enter student name'); return; }
+    if (!phone || phone.length < 10) { showToast('⚠️ Please enter a valid 10-digit number'); return; }
+    if (!classVal) { showToast('⚠️ Please select class & board'); return; }
+    if (!date) { showToast('⚠️ Please select joining date'); return; }
+
+    const [classLabel, fee] = classVal.split('|');
+    students.unshift({
+      id: Date.now(),
+      name, phone, classLabel,
+      fee: parseInt(fee),
+      joiningDate: date,
+      parentName: parent || '',
+      paidMonth: null
+    });
+    save();
+
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-phone').value = '';
+    document.getElementById('inp-class').value = '';
+    document.getElementById('inp-parent').value = '';
+    document.getElementById('inp-date').valueAsDate = new Date();
+
+    showToast('✅ ' + name + ' added successfully!');
+    render();
+  }
+
+  // ── MARK PAID ──
+  function markPaid(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    const today = new Date();
+    s.paidMonth = today.toISOString();
+    save();
+    showToast('✅ Payment marked for ' + s.name + '!');
+    render();
+  }
+
+  // ── MARK UNPAID ──
+  function markUnpaid(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    s.paidMonth = null;
+    save();
+    showToast('↩️ Marked as unpaid for ' + s.name);
+    render();
+  }
+
+  // ── DELETE ──
+  function deleteStudent(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    if (confirm('Remove ' + s.name + ' from the tracker?')) {
+      students = students.filter(x => x.id !== id);
+      save();
+      showToast('🗑️ ' + s.name + ' removed');
+      render();
+    }
+  }
+
+  // ── WHATSAPP ──
+  function sendWA(phone, name, fee, dueDate, parentName) {
+    const msg = encodeURIComponent(
+      'Dear Parent,\n\nThis is a gentle reminder that your child\'s tuition fee payment is due.\n\nThank you.'
+    );
+    window.open('https://wa.me/91' + phone + '?text=' + msg, '_blank');
+  }
+
+  // ── FILTER ──
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── RENDER ──
+  function render() {
+    const list = document.getElementById('studentList');
+    let counts = { overdue: 0, soon: 0, paid: 0, ok: 0 };
+
+    // Calculate statuses
+    const withStatus = students.map(s => {
+      const info = getDueInfo(s);
+      counts[info.status]++;
+      return { ...s, ...info };
+    });
+
+    // Update stats
+    document.getElementById('statTotal').textContent = students.length;
+    document.getElementById('statOverdue').textContent = counts.overdue;
+    document.getElementById('statSoon').textContent = counts.soon;
+    document.getElementById('statPaid').textContent = counts.paid;
+
+    // Sort: overdue → soon → ok → paid
+    const order = { overdue: 0, soon: 1, ok: 2, paid: 3 };
+    withStatus.sort((a, b) => order[a.status] - order[b.status] || a.diffDays - b.diffDays);
+
+    // Filter
+    const filtered = withStatus.filter(s => {
+      if (currentFilter === 'all') return true;
+      return s.status === currentFilter;
+    });
+
+    document.getElementById('listCount').textContent = filtered.length + ' student' + (filtered.length !== 1 ? 's' : '');
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="emoji">' +
+        (currentFilter === 'all' ? '📋' : '✅') + '</div><p>' +
+        (currentFilter === 'all' ? 'No students added yet.<br>Add your first student above!' : 'No students in this category.') +
+        '</p></div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(s => {
+      const cardClass = s.status === 'overdue' ? 'c-overdue' : s.status === 'soon' ? 'c-soon' : s.status === 'paid' ? 'c-paid' : '';
+      const pillClass = s.status === 'overdue' ? 'pill-overdue' : s.status === 'soon' ? 'pill-soon' : s.status === 'paid' ? 'pill-paid' : 'pill-ok';
+      const pillText = s.status === 'overdue' ? '⚠ Overdue' : s.status === 'soon' ? `Due in ${s.diffDays} day${s.diffDays !== 1 ? 's' : ''}` : s.status === 'paid' ? '✓ Paid' : '✓ On Track';
+      const dueLabel = s.status === 'overdue' ? 'Was due ' : s.status === 'paid' ? 'Next due ' : 'Due ';
+      const dueClass = s.status === 'overdue' ? 'overdue' : s.status === 'soon' ? 'soon' : '';
+      const dueDateStr = fmtDate(s.due);
+      const paidDateStr = s.paidMonth ? fmtDate(new Date(s.paidMonth)) : '';
+
+      return `<div class="student-card ${cardClass}">
+        <div class="card-top">
+          <div class="card-left">
+            <div class="status-pill ${pillClass}">${pillText}</div>
+            <div class="student-name">${s.name}</div>
+            <div class="student-meta">
+              📚 ${s.classLabel}<br>
+              📅 Joined ${fmtDate(s.joiningDate)}${s.parentName ? ' · 👤 ' + s.parentName : ''}
+              ${s.paidMonth ? '<br>✅ Paid on ' + paidDateStr : ''}
+            </div>
+          </div>
+          <div class="card-right">
+            <div class="fee-amount">₹${s.fee.toLocaleString('en-IN')}</div>
+            <div class="fee-due ${dueClass}">${dueLabel}${dueDateStr}</div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-action btn-wa" onclick="sendWA('${s.phone}','${s.name}',${s.fee},'${dueDateStr}','${s.parentName}')">💬 Remind</button>
+          <a class="btn-action btn-call" href="tel:${s.phone}">📞 Call</a>
+          ${s.status !== 'paid'
+            ? `<button class="btn-action btn-paid" onclick="markPaid(${s.id})">✅ Mark Paid</button>`
+            : `<button class="btn-action btn-unpaid" onclick="markUnpaid(${s.id})">↩ Undo Paid</button>`
+          }
+          <button class="btn-action btn-delete" onclick="deleteStudent(${s.id})">🗑 Remove</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  render();
+</script>
+</body>
+</html>
