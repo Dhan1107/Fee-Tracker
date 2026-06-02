@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kamadhenu Fee Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --teal: #0D6E6E; --teal-light: #1A9999; --teal-pale: #E6F5F5;
+    --gold: #C9972B; --gold-pale: #FDF6E3;
+    --dark: #0A1A1A; --text: #1A3030; --text-muted: #4A6E6E;
+    --red: #E53E3E; --red-pale: #FFF5F5;
+    --orange: #DD6B20; --orange-pale: #FFFAF0;
+    --green: #38A169; --green-pale: #F0FFF4;
+    --blue: #3182CE; --blue-pale: #EBF8FF;
+    --cream: #F4FAFA;
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--dark), #122828);
+    padding: 1.1rem 1.2rem; position: sticky; top: 0; z-index: 200;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .header::before {
+    content: 'ॐ'; position: absolute; right: 1rem; top: 50%;
+    transform: translateY(-50%); font-size: 3.5rem; font-family: serif;
+    color: rgba(201,151,43,0.1); pointer-events: none;
+  }
+  .header-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header-logo { font-size: 1.6rem; }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: white; }
+  .header-sub { font-size: 0.68rem; color: rgba(255,255,255,0.4); margin-top: 1px; }
+  .header-actions { display: flex; gap: 6px; }
+  .btn-header {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; padding: 0.4rem 0.7rem; color: rgba(255,255,255,0.8);
+    font-size: 0.72rem; font-weight: 500; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-header:active { background: rgba(255,255,255,0.2); }
+
+  .main { max-width: 900px; margin: 0 auto; padding: 1.2rem 0.9rem; }
+
+  /* STATS */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1.2rem; }
+  .stat-card {
+    background: white; border-radius: 12px; padding: 0.9rem 0.6rem;
+    border: 1px solid rgba(13,110,110,0.1); text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; line-height: 1; margin-bottom: 2px; }
+  .stat-label { font-size: 0.6rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
+  .s-due .stat-num { color: var(--red); }
+  .s-soon .stat-num { color: var(--orange); }
+  .s-ok .stat-num { color: var(--green); }
+  .s-total .stat-num { color: var(--teal); }
+
+  /* FORM CARD */
+  .form-card {
+    background: white; border-radius: 16px; padding: 1.3rem;
+    border: 1px solid rgba(13,110,110,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05); margin-bottom: 1.2rem;
+  }
+  .form-title { font-family: 'Playfair Display', serif; font-size: 0.95rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.full { grid-column: span 2; }
+  label { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  input, select {
+    border: 1.5px solid rgba(13,110,110,0.15); border-radius: 9px;
+    padding: 0.6rem 0.75rem; font-size: 0.88rem;
+    font-family: 'DM Sans', sans-serif; color: var(--text);
+    outline: none; transition: border-color 0.2s;
+    background: var(--cream); width: 100%;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--teal); background: white; }
+  input::placeholder { color: #bbb; }
+  .btn-add {
+    background: linear-gradient(135deg, var(--teal), #1B4F8A);
+    color: white; border: none; border-radius: 9px;
+    padding: 0.65rem; font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    width: 100%; margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(13,110,110,0.3);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-add:active { opacity: 0.85; }
+
+  /* FILTER */
+  .filter-bar {
+    display: flex; gap: 6px; margin-bottom: 1rem;
+    overflow-x: auto; padding-bottom: 3px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    background: white; border: 1.5px solid rgba(13,110,110,0.15);
+    border-radius: 50px; padding: 0.35rem 0.85rem; font-size: 0.76rem;
+    font-weight: 500; color: var(--text-muted); cursor: pointer;
+    white-space: nowrap; flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .filter-btn.active { background: var(--teal); border-color: var(--teal); color: white; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Playfair Display', serif; font-size: 0.95rem;
+    font-weight: 700; color: var(--dark); margin-bottom: 0.7rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-count { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+
+  /* STUDENT CARDS */
+  .student-list { display: flex; flex-direction: column; gap: 9px; }
+  .student-card {
+    background: white; border-radius: 14px; padding: 1rem;
+    border: 1.5px solid rgba(13,110,110,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-5px);} to{opacity:1;transform:translateY(0);} }
+  .c-overdue { border-color: rgba(229,62,62,0.4); background: var(--red-pale); }
+  .c-soon { border-color: rgba(221,107,32,0.35); background: var(--orange-pale); }
+  .c-paid { border-color: rgba(56,161,105,0.3); background: var(--green-pale); }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 0.6rem; }
+  .student-name { font-weight: 600; font-size: 0.95rem; color: var(--dark); }
+  .student-meta { font-size: 0.74rem; color: var(--text-muted); line-height: 1.55; margin-top: 2px; }
+  .card-right { text-align: right; flex-shrink: 0; }
+  .fee-amount { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--teal); }
+  .fee-due { font-size: 0.7rem; color: var(--text-muted); margin-top: 1px; }
+  .fee-due.overdue { color: var(--red); font-weight: 600; }
+  .fee-due.soon { color: var(--orange); font-weight: 600; }
+
+  .status-pill {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 50px;
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; margin-bottom: 4px;
+  }
+  .pill-overdue { background: var(--red); color: white; }
+  .pill-soon { background: var(--orange); color: white; }
+  .pill-ok { background: var(--green); color: white; }
+  .pill-paid { background: var(--blue); color: white; }
+
+  /* ACTION BUTTONS */
+  .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-a {
+    border: none; border-radius: 8px; padding: 0.45rem 0.75rem;
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 3px;
+    text-decoration: none; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-a:active { opacity: 0.8; transform: scale(0.97); }
+  .a-wa { background: #25D366; color: white; }
+  .a-call { background: var(--teal-pale); color: var(--teal); border: 1.5px solid rgba(13,110,110,0.2); }
+  .a-paid { background: var(--blue-pale); color: var(--blue); border: 1.5px solid rgba(49,130,206,0.2); }
+  .a-paid.active { background: var(--blue); color: white; }
+  .a-unpaid { background: var(--orange-pale); color: var(--orange); border: 1.5px solid rgba(221,107,32,0.2); font-size: 0.7rem; }
+  .a-edit { background: var(--gold-pale); color: var(--gold); border: 1.5px solid rgba(201,151,43,0.25); }
+  .a-del { background: var(--red-pale); color: var(--red); border: 1.5px solid rgba(229,62,62,0.2); margin-left: auto; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);
+    background: white; border-radius: 14px; border: 1.5px dashed rgba(13,110,110,0.2);
+  }
+  .empty-state .emoji { font-size: 2rem; margin-bottom: 0.6rem; }
+  .empty-state p { font-size: 0.85rem; line-height: 1.6; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 300; display: flex; align-items: center; justify-content: center;
+    padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: white; border-radius: 20px; padding: 1.5rem;
+    width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto;
+    transform: scale(0.9); transition: transform 0.25s;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--dark); margin-bottom: 1.2rem; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .modal-grid .full { grid-column: span 2; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+  .btn-modal-save {
+    flex: 1; background: linear-gradient(135deg, var(--teal), #1B4F8A);
+    color: white; border: none; border-radius: 9px; padding: 0.65rem;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-modal-cancel {
+    flex: 1; background: var(--cream); color: var(--text-muted);
+    border: 1.5px solid rgba(13,110,110,0.15); border-radius: 9px;
+    padding: 0.65rem; font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--dark); color: white; padding: 0.6rem 1.3rem;
+    border-radius: 50px; font-size: 0.8rem; font-weight: 500;
+    z-index: 400; transition: transform 0.3s ease;
+    white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .footer { text-align: center; padding: 1.5rem; font-size: 0.72rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo">🦚</div>
+      <div>
+        <div class="header-title">Kamadhenu Fee Tracker</div>
+        <div class="header-sub">Track · Remind · Mark Paid</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-header" onclick="exportData()">📤 Export</button>
+      <label class="btn-header" style="cursor:pointer;">📥 Import<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-card s-total"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-card s-due"><div class="stat-num" id="statOverdue">0</div><div class="stat-label">Overdue</div></div>
+    <div class="stat-card s-soon"><div class="stat-num" id="statSoon">0</div><div class="stat-label">Due Soon</div></div>
+    <div class="stat-card s-ok"><div class="stat-num" id="statPaid">0</div><div class="stat-label">Paid</div></div>
+  </div>
+
+  <!-- ADD FORM -->
+  <div class="form-card">
+    <div class="form-title">➕ Add New Student</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Student Name</label>
+        <input type="text" id="inp-name" placeholder="e.g. Ravi Kumar" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Parent WhatsApp No.</label>
+        <input type="tel" id="inp-phone" placeholder="e.g. 9876543210" maxlength="10">
+      </div>
+      <div class="form-group">
+        <label>Class &amp; Board</label>
+        <select id="inp-class">
+          <option value="">Select class &amp; board</option>
+          <optgroup label="── State Board ──">
+            <option value="Class 5 – State">Class 5 – State</option>
+            <option value="Class 6 – State">Class 6 – State</option>
+            <option value="Class 7 – State">Class 7 – State</option>
+            <option value="Class 8 – State">Class 8 – State</option>
+            <option value="Class 9 – State">Class 9 – State</option>
+            <option value="Class 10 – State">Class 10 – State</option>
+          </optgroup>
+          <optgroup label="── CBSE ──">
+            <option value="Class 5 – CBSE">Class 5 – CBSE</option>
+            <option value="Class 6 – CBSE">Class 6 – CBSE</option>
+            <option value="Class 7 – CBSE">Class 7 – CBSE</option>
+            <option value="Class 8 – CBSE">Class 8 – CBSE</option>
+            <option value="Class 9 – CBSE">Class 9 – CBSE</option>
+            <option value="Class 10 – CBSE">Class 10 – CBSE</option>
+          </optgroup>
+          <optgroup label="── ICSE ──">
+            <option value="Class 5 – ICSE">Class 5 – ICSE</option>
+            <option value="Class 6 – ICSE">Class 6 – ICSE</option>
+            <option value="Class 7 – ICSE">Class 7 – ICSE</option>
+            <option value="Class 8 – ICSE">Class 8 – ICSE</option>
+            <option value="Class 9 – ICSE">Class 9 – ICSE</option>
+            <option value="Class 10 – ICSE">Class 10 – ICSE</option>
+          </optgroup>
+          <optgroup label="── PUC ──">
+            <option value="1st PUC Commerce">1st PUC Commerce</option>
+            <option value="2nd PUC Commerce">2nd PUC Commerce</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Monthly Fee (₹)</label>
+        <input type="number" id="inp-fee" placeholder="e.g. 1500" min="0">
+      </div>
+      <div class="form-group">
+        <label>Joining Date</label>
+        <input type="date" id="inp-date">
+      </div>
+      <div class="form-group">
+        <label>Parent Name (optional)</label>
+        <input type="text" id="inp-parent" placeholder="e.g. Mr. Suresh" autocomplete="off">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addStudent()">➕ Add Student</button>
+  </div>
+
+  <!-- FILTER -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('overdue',this)">🔴 Overdue</button>
+    <button class="filter-btn" onclick="setFilter('soon',this)">🟠 Due Soon</button>
+    <button class="filter-btn" onclick="setFilter('paid',this)">✅ Paid</button>
+    <button class="filter-btn" onclick="setFilter('ok',this)">🟢 On Track</button>
+  </div>
+
+  <div class="section-title">
+    <span>Students</span>
+    <span class="section-count" id="listCount"></span>
+  </div>
+  <div class="student-list" id="studentList"></div>
+</div>
+
+<div class="footer">Kamadhenu Tuition Centre · Weavers Colony, Bannerghatta Road, Bangalore 560083</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Student</div>
+    <div class="modal-grid">
+      <div class="form-group">
+        <label>Student Name</label>
+        <input type="text" id="edit-name" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>WhatsApp No.</label>
+        <input type="tel" id="edit-phone" maxlength="10">
+      </div>
+      <div class="form-group full">
+        <label>Class &amp; Board</label>
+        <select id="edit-class">
+          <option value="">Select class &amp; board</option>
+          <optgroup label="── State Board ──">
+            <option value="Class 5 – State">Class 5 – State</option>
+            <option value="Class 6 – State">Class 6 – State</option>
+            <option value="Class 7 – State">Class 7 – State</option>
+            <option value="Class 8 – State">Class 8 – State</option>
+            <option value="Class 9 – State">Class 9 – State</option>
+            <option value="Class 10 – State">Class 10 – State</option>
+          </optgroup>
+          <optgroup label="── CBSE ──">
+            <option value="Class 5 – CBSE">Class 5 – CBSE</option>
+            <option value="Class 6 – CBSE">Class 6 – CBSE</option>
+            <option value="Class 7 – CBSE">Class 7 – CBSE</option>
+            <option value="Class 8 – CBSE">Class 8 – CBSE</option>
+            <option value="Class 9 – CBSE">Class 9 – CBSE</option>
+            <option value="Class 10 – CBSE">Class 10 – CBSE</option>
+          </optgroup>
+          <optgroup label="── ICSE ──">
+            <option value="Class 5 – ICSE">Class 5 – ICSE</option>
+            <option value="Class 6 – ICSE">Class 6 – ICSE</option>
+            <option value="Class 7 – ICSE">Class 7 – ICSE</option>
+            <option value="Class 8 – ICSE">Class 8 – ICSE</option>
+            <option value="Class 9 – ICSE">Class 9 – ICSE</option>
+            <option value="Class 10 – ICSE">Class 10 – ICSE</option>
+          </optgroup>
+          <optgroup label="── PUC ──">
+            <option value="1st PUC Commerce">1st PUC Commerce</option>
+            <option value="2nd PUC Commerce">2nd PUC Commerce</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Monthly Fee (₹)</label>
+        <input type="number" id="edit-fee" min="0">
+      </div>
+      <div class="form-group">
+        <label>Joining Date</label>
+        <input type="date" id="edit-date">
+      </div>
+      <div class="form-group full">
+        <label>Parent Name (optional)</label>
+        <input type="text" id="edit-parent" autocomplete="off">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-save" onclick="saveEdit()">✅ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORE_KEY = 'ktc_v3';
+  let students = [];
+  let currentFilter = 'all';
+  let editingId = null;
+
+  function load() { try { students = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e) { students = []; } }
+  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(students)); } catch(e) { showToast('⚠️ Storage full!'); } }
+
+  load();
+  document.getElementById('inp-date').valueAsDate = new Date();
+
+  // ── DATE HELPERS ──
+  function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}); }
+
+  function getDueInfo(s) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const joined = new Date(s.joiningDate);
+    let due = new Date(today.getFullYear(), today.getMonth(), joined.getDate());
+    if (due < today) due.setMonth(due.getMonth() + 1);
+    const diffDays = Math.ceil((due - today) / 86400000);
+
+    if (s.paidMonth) {
+      const pm = new Date(s.paidMonth);
+      const nextDue = new Date(today.getFullYear(), today.getMonth(), joined.getDate());
+      if (nextDue < today) nextDue.setMonth(nextDue.getMonth() + 1);
+      if (pm.getMonth() === nextDue.getMonth() && pm.getFullYear() === nextDue.getFullYear()) {
+        return { due: nextDue, diffDays, status: 'paid' };
+      }
+    }
+
+    if (diffDays <= 0) return { due, diffDays, status: 'overdue' };
+    if (diffDays <= 5) return { due, diffDays, status: 'soon' };
+    return { due, diffDays, status: 'ok' };
+  }
+
+  // ── ADD ──
+  function addStudent() {
+    const name = document.getElementById('inp-name').value.trim();
+    const phone = document.getElementById('inp-phone').value.trim();
+    const classVal = document.getElementById('inp-class').value;
+    const fee = document.getElementById('inp-fee').value;
+    const date = document.getElementById('inp-date').value;
+    const parent = document.getElementById('inp-parent').value.trim();
+
+    if (!name) { showToast('⚠️ Enter student name'); return; }
+    if (!phone || phone.length < 10) { showToast('⚠️ Enter valid 10-digit number'); return; }
+    if (!classVal) { showToast('⚠️ Select class & board'); return; }
+    if (!fee || parseInt(fee) <= 0) { showToast('⚠️ Enter monthly fee amount'); return; }
+    if (!date) { showToast('⚠️ Select joining date'); return; }
+
+    students.unshift({ id: Date.now(), name, phone, classLabel: classVal, fee: parseInt(fee), joiningDate: date, parentName: parent, paidMonth: null });
+    save();
+
+    ['inp-name','inp-phone','inp-fee','inp-parent'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('inp-class').value = '';
+    document.getElementById('inp-date').valueAsDate = new Date();
+
+    showToast('✅ ' + name + ' added!');
+    render();
+  }
+
+  // ── EDIT ──
+  function openEdit(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    editingId = id;
+    document.getElementById('edit-name').value = s.name;
+    document.getElementById('edit-phone').value = s.phone;
+    document.getElementById('edit-class').value = s.classLabel;
+    document.getElementById('edit-fee').value = s.fee;
+    document.getElementById('edit-date').value = s.joiningDate;
+    document.getElementById('edit-parent').value = s.parentName || '';
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('editModal').classList.remove('open');
+    editingId = null;
+  }
+
+  function saveEdit() {
+    const s = students.find(x => x.id === editingId);
+    if (!s) return;
+    const name = document.getElementById('edit-name').value.trim();
+    const phone = document.getElementById('edit-phone').value.trim();
+    const classVal = document.getElementById('edit-class').value;
+    const fee = document.getElementById('edit-fee').value;
+    const date = document.getElementById('edit-date').value;
+    const parent = document.getElementById('edit-parent').value.trim();
+
+    if (!name || !phone || !classVal || !fee || !date) { showToast('⚠️ Please fill all fields'); return; }
+
+    s.name = name; s.phone = phone; s.classLabel = classVal;
+    s.fee = parseInt(fee); s.joiningDate = date; s.parentName = parent;
+    save(); closeModal();
+    showToast('✅ ' + name + ' updated!');
+    render();
+  }
+
+  // ── MARK PAID / UNPAID ──
+  function markPaid(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    s.paidMonth = new Date().toISOString();
+    save(); showToast('✅ Fee marked as paid for ' + s.name + '!'); render();
+  }
+  function markUnpaid(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    s.paidMonth = null;
+    save(); showToast('↩️ Marked unpaid for ' + s.name); render();
+  }
+
+  // ── DELETE ──
+  function deleteStudent(id) {
+    const s = students.find(x => x.id === id);
+    if (!s) return;
+    if (confirm('Remove ' + s.name + '?')) {
+      students = students.filter(x => x.id !== id);
+      save(); showToast('🗑️ ' + s.name + ' removed'); render();
+    }
+  }
+
+  // ── WHATSAPP ──
+  function sendWA(phone, name, fee, dueDate) {
+    const monthName = new Date().toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    const msg = encodeURIComponent(
+      '❗ FEES REMINDER ❗\n\n' +
+      'Dear Parent,\n\n' +
+      'This is a gentle reminder that the tuition fee payment for *' + name + '* for the month of *' + monthName + '* is due.\n\n' +
+      'Kindly make the payment at your earliest convenience.\n\n' +
+      'Thank you.\n\n' +
+      'Regards,\n' +
+      'Kamadhenu Tuition Centre'
+    );
+    window.open('https://wa.me/91' + phone + '?text=' + msg, '_blank');
+  }
+
+  // ── EXPORT / IMPORT ──
+  function exportData() {
+    if (students.length === 0) { showToast('⚠️ No students to export'); return; }
+    const blob = new Blob([JSON.stringify(students, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'kamadhenu-students-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    showToast('📤 Exported ' + students.length + ' students!');
+  }
+
+  function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) { showToast('⚠️ Invalid file format'); return; }
+        // Merge — avoid duplicates by ID
+        const existingIds = new Set(students.map(s => s.id));
+        const newStudents = data.filter(s => !existingIds.has(s.id));
+        students = [...students, ...newStudents];
+        save(); render();
+        showToast('📥 Imported ' + newStudents.length + ' new students!');
+      } catch(err) { showToast('⚠️ Could not read file'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  // ── FILTER ──
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); render();
+  }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── RENDER ──
+  function render() {
+    const list = document.getElementById('studentList');
+    let counts = { overdue: 0, soon: 0, paid: 0, ok: 0 };
+
+    const withStatus = students.map(s => {
+      const info = getDueInfo(s);
+      counts[info.status]++;
+      return { ...s, ...info };
+    });
+
+    document.getElementById('statTotal').textContent = students.length;
+    document.getElementById('statOverdue').textContent = counts.overdue;
+    document.getElementById('statSoon').textContent = counts.soon;
+    document.getElementById('statPaid').textContent = counts.paid;
+
+    const order = { overdue: 0, soon: 1, ok: 2, paid: 3 };
+    withStatus.sort((a, b) => order[a.status] - order[b.status] || a.diffDays - b.diffDays);
+
+    const filtered = currentFilter === 'all' ? withStatus : withStatus.filter(s => s.status === currentFilter);
+    document.getElementById('listCount').textContent = filtered.length + ' student' + (filtered.length !== 1 ? 's' : '');
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="emoji">${currentFilter === 'all' ? '📋' : '✅'}</div><p>${currentFilter === 'all' ? 'No students added yet.<br>Add your first student above!' : 'No students in this category.'}</p></div>`;
+      return;
+    }
+
+    const pillClass = { overdue: 'pill-overdue', soon: 'pill-soon', ok: 'pill-ok', paid: 'pill-paid' };
+    const pillText = s => s.status === 'overdue' ? '⚠ Overdue' : s.status === 'soon' ? `Due in ${s.diffDays}d` : s.status === 'paid' ? '✓ Paid' : '✓ On Track';
+    const dueLabel = s => s.status === 'overdue' ? 'Was due ' : 'Due ';
+    const dueClass = s => s.status === 'overdue' ? 'overdue' : s.status === 'soon' ? 'soon' : '';
+    const cardClass = s => s.status === 'overdue' ? 'c-overdue' : s.status === 'soon' ? 'c-soon' : s.status === 'paid' ? 'c-paid' : '';
+
+    list.innerHTML = filtered.map(s => {
+      const dueDateStr = fmtDate(s.due);
+      const paidStr = s.paidMonth ? ' · ✅ Paid ' + fmtDate(new Date(s.paidMonth)) : '';
+      return `<div class="student-card ${cardClass(s)}">
+        <div class="card-top">
+          <div>
+            <div class="status-pill ${pillClass[s.status]}">${pillText(s)}</div>
+            <div class="student-name">${s.name}</div>
+            <div class="student-meta">📚 ${s.classLabel}${s.parentName ? ' · 👤 ' + s.parentName : ''}<br>📅 Joined ${fmtDate(s.joiningDate)}${paidStr}</div>
+          </div>
+          <div class="card-right">
+            <div class="fee-amount">₹${s.fee.toLocaleString('en-IN')}</div>
+            <div class="fee-due ${dueClass(s)}">${dueLabel(s)}${dueDateStr}</div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-a a-wa" onclick="sendWA('${s.phone}','${s.name}',${s.fee},'${dueDateStr}')">💬 Remind</button>
+          <a class="btn-a a-call" href="tel:${s.phone}">📞 Call</a>
+          ${s.status !== 'paid'
+            ? `<button class="btn-a a-paid" onclick="markPaid(${s.id})">✅ Mark Paid</button>`
+            : `<button class="btn-a a-unpaid" onclick="markUnpaid(${s.id})">↩ Undo</button>`}
+          <button class="btn-a a-edit" onclick="openEdit(${s.id})">✏️ Edit</button>
+          <button class="btn-a a-del" onclick="deleteStudent(${s.id})">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  render();
+</script>
+</body>
+</html>
